@@ -1,0 +1,34 @@
+import nltk
+from nltk import CFG
+from nltk.parse import RecursiveDescentParser
+from nltk.tokenize import word_tokenize
+
+# Download tokenizer model (only once)
+nltk.download('punkt')
+
+# Step 1: Define a simple CFG grammar
+grammar = CFG.fromstring("""
+    S -> NP VP
+    NP -> Det N | Det N PP
+    VP -> V NP | VP PP
+    PP -> P NP
+    Det -> 'the' | 'a'
+    N -> 'cat' | 'dog' | 'telescope' | 'mat'
+    V -> 'saw' | 'sat'
+    P -> 'on' | 'with'
+""")
+
+# Step 2: Create a parser (top-down recursive descent parser)
+parser = RecursiveDescentParser(grammar)
+
+# Step 3: Input sentence
+sentence = "the dog saw a cat with the telescope"
+
+# Step 4: Tokenize the sentence
+tokens = word_tokenize(sentence)
+
+# Step 5: Generate and print parse trees
+print("Parse Trees:")
+for tree in parser.parse(tokens):
+    print(tree)
+    tree.pretty_print()
