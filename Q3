@@ -1,0 +1,52 @@
+import nltk
+from nltk.tokenize import word_tokenize
+from nltk.stem import PorterStemmer, WordNetLemmatizer
+from nltk.corpus import wordnet
+
+# Download required NLTK resources (only needed once)
+nltk.download('punkt')
+nltk.download('wordnet')
+nltk.download('averaged_perceptron_tagger')
+
+# Initialize stemmer and lemmatizer
+stemmer = PorterStemmer()
+lemmatizer = WordNetLemmatizer()
+
+# Helper function to convert POS tag to WordNet format
+def get_wordnet_pos(treebank_tag):
+    if treebank_tag.startswith('J'):
+        return wordnet.ADJ
+    elif treebank_tag.startswith('V'):
+        return wordnet.VERB
+    elif treebank_tag.startswith('N'):
+        return wordnet.NOUN
+    elif treebank_tag.startswith('R'):
+        return wordnet.ADV
+    else:
+        return wordnet.NOUN  # Default to noun
+
+# Sample text
+text = "The children are playing in the garden while the dog was barking loudly."
+
+# Tokenization
+tokens = word_tokenize(text)
+print("Tokens:", tokens)
+
+# POS tagging
+pos_tags = nltk.pos_tag(tokens)
+print("\nPOS Tags:")
+for word, tag in pos_tags:
+    print(f"{word} -> {tag}")
+
+# Stemming
+print("\nStemming Results:")
+for word in tokens:
+    print(f"{word} -> {stemmer.stem(word)}")
+
+# Lemmatization with POS
+print("\nLemmatization Results:")
+for word, tag in pos_tags:
+    pos = get_wordnet_pos(tag)
+    lemma = lemmatizer.lemmatize(word, pos)
+    print(f"{word} ({tag}) -> {lemma}")
+
