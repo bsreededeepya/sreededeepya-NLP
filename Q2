@@ -1,0 +1,30 @@
+def fsa_ends_with_ab(string):
+    state = 'q0'
+
+    for char in string:
+        if state == 'q0':
+            if char == 'a':
+                state = 'q1'
+            else:
+                state = 'q0'
+        elif state == 'q1':
+            if char == 'b':
+                state = 'q2'
+            elif char == 'a':
+                state = 'q1'
+            else:
+                state = 'q0'
+        elif state == 'q2':
+            if char == 'a':
+                state = 'q1'
+            else:
+                state = 'q0'
+
+    return state == 'q2'
+
+# Testing the FSA
+test_strings = ["helloab", "aab", "ab", "abc", "aabb", "baba"]
+
+for s in test_strings:
+    result = fsa_ends_with_ab(s)
+    print(f"'{s}' ends with 'ab': {result}")
