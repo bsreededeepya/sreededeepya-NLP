@@ -1,0 +1,30 @@
+class PluralFSM:
+    def __init__(self):
+        self.vowels = set('aeiou')
+
+    def is_consonant(self, char):
+        return char.isalpha() and char.lower() not in self.vowels
+
+    def pluralize(self, noun):
+        """
+        Applies finite-state rules to pluralize a noun.
+        """
+        if noun.endswith(('s', 'x', 'z', 'ch', 'sh')):
+            return noun + 'es'
+        elif noun.endswith('y'):
+            if len(noun) > 1 and self.is_consonant(noun[-2]):
+                return noun[:-1] + 'ies'
+            else:
+                return noun + 's'
+        else:
+            return noun + 's'
+
+
+# Test the FSM
+fsm = PluralFSM()
+
+nouns = ['cat', 'box', 'church', 'brush', 'baby', 'key', 'boy', 'quiz']
+print("Singular -> Plural:")
+for noun in nouns:
+    plural = fsm.pluralize(noun)
+    print(f"{noun} -> {plural}")
