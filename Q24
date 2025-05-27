@@ -1,0 +1,52 @@
+import re
+
+def recognize_dialog_act(utterance):
+    utterance = utterance.lower().strip()
+    
+    # Greetings
+    greetings = ['hello', 'hi', 'hey', 'good morning', 'good evening', 'good afternoon']
+    if any(utterance.startswith(greet) for greet in greetings):
+        return 'Greeting'
+    
+    # Questions
+    if utterance.endswith('?'):
+        return 'Question'
+    
+    # Yes/No responses
+    yes = ['yes', 'yeah', 'yep', 'sure', 'of course', 'definitely']
+    no = ['no', 'nope', 'nah', 'not really']
+    if utterance in yes:
+        return 'Affirmation'
+    if utterance in no:
+        return 'Negation'
+    
+    # Requests (simple heuristic: starts with 'can you', 'please', 'could you')
+    if utterance.startswith(('can you', 'could you', 'please', 'would you')):
+        return 'Request'
+    
+    # Thanks
+    thanks = ['thank you', 'thanks', 'thx', 'thank you very much']
+    if any(phrase in utterance for phrase in thanks):
+        return 'Thanking'
+    
+    # Farewell
+    farewells = ['bye', 'goodbye', 'see you', 'take care', 'farewell']
+    if any(utterance.startswith(farewell) for farewell in farewells):
+        return 'Farewell'
+    
+    # Default fallback
+    return 'Statement'
+
+if __name__ == "__main__":
+    dialog = [
+        "Hi there!",
+        "Can you help me with my homework?",
+        "Yes, I can.",
+        "Thank you so much.",
+        "What time is the meeting?",
+        "Bye!"
+    ]
+    
+    for utterance in dialog:
+        act = recognize_dialog_act(utterance)
+        print(f"Utterance: \"{utterance}\"  --> Dialog Act: {act}")
