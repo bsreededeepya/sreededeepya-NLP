@@ -1,0 +1,50 @@
+import nltk
+from nltk.tokenize import word_tokenize
+from nltk.tag import DefaultTagger, RegexpTagger
+
+# Sample sentence
+sentence = "The dog barked at the mailman and ran back home."
+
+# Tokenize the sentence
+tokens = word_tokenize(sentence)
+
+# Step 1: Initial tagging using a DefaultTagger (everything as noun)
+default_tagger = DefaultTagger('NN')
+initial_tags = default_tagger.tag(tokens)
+
+# Step 2: Apply simple transformation rules
+def apply_transformation_rules(tagged_tokens):
+    transformed = []
+
+    for i, (word, tag) in enumerate(tagged_tokens):
+        # Rule 1: If the word is 'the' or 'a', change tag to 'DT'
+        if word.lower() in ['the', 'a', 'an']:
+            tag = 'DT'
+        
+        # Rule 2: If word ends with "ed", assume it's a past tense verb (VBD)
+        elif word.endswith('ed'):
+            tag = 'VBD'
+
+        # Rule 3: If word is a known coordinating conjunction
+        elif word.lower() in ['and', 'but', 'or']:
+            tag = 'CC'
+
+        # Rule 4: If word ends with "ing", assume it's a gerund (VBG)
+        elif word.endswith('ing'):
+            tag = 'VBG'
+
+        # Rule 5: If word is a known preposition
+        elif word.lower() in ['at', 'in', 'on', 'by', 'with', 'from', 'to']:
+            tag = 'IN'
+
+        transformed.append((word, tag))
+
+    return transformed
+
+# Apply the rules
+transformed_tags = apply_transformation_rules(initial_tags)
+
+# Display output
+print("Transformed POS Tags:")
+for word, tag in transformed_tags:
+    print(f"{word} -> {tag}")
