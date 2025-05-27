@@ -1,0 +1,49 @@
+from nltk.corpus import wordnet as wn
+from nltk.corpus import stopwords
+import string
+
+stop_words = set(stopwords.words('english'))
+
+def lesk(context_sentence, ambiguous_word):
+    """
+    Simplified Lesk algorithm implementation
+    :param context_sentence: list of words (tokens) in context sentence
+    :param ambiguous_word: word to disambiguate
+    :return: best matching synset or None
+    """
+    context = set(context_sentence) - stop_words - set(string.punctuation)
+    
+    synsets = wn.synsets(ambiguous_word)
+    if not synsets:
+        return None
+    
+    max_overlap = 0
+    best_sense = None
+    
+    for syn in synsets:
+        # Combine definition and examples into gloss
+        gloss = syn.definition().split() + sum([ex.split() for ex in syn.examples()], [])
+        gloss = set(word.lower() for word in gloss)
+        
+        overlap = len(context.intersection(gloss))
+        
+        if overlap > max_overlap:
+            max_overlap = overlap
+            best_sense = syn
+    
+    return best_sense
+
+if __name__ == "__main__":
+    sentence = "I went to the bank to deposit money"
+    ambiguous_word = "bank"
+    
+    # Tokenize sentence (simple split here, for better use nltk.word_tokenize)
+    context = sentence.lower().split()
+    
+    best_synset = lesk(context, ambiguous_word)
+    if best_synset:
+        print(f"Best sense for '{ambiguous_word}': {best_synset.name()}")
+        print(f"Definition: {best_synset.definition()}")
+        print(f"Examples: {best_synset.examples()}")
+    else:
+        print(f"No sense found for '{ambiguous_word}'")
