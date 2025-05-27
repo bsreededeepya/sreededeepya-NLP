@@ -1,0 +1,42 @@
+from sentence_transformers import SentenceTransformer
+from sklearn.metrics.pairwise import cosine_similarity
+import numpy as np
+import nltk
+
+# Download sentence tokenizer if needed
+nltk.download('punkt')
+
+def sentence_coherence_score(text):
+    # Split text into sentences
+    sentences = nltk.sent_tokenize(text)
+    if len(sentences) < 2:
+        return 1.0  # single sentence - trivially coherent
+    
+    # Load pre-trained sentence embedding model
+    model = SentenceTransformer('all-MiniLM-L6-v2')
+    
+    # Encode sentences
+    embeddings = model.encode(sentences)
+    
+    # Compute cosine similarities between adjacent sentences
+    sim_scores = []
+    for i in range(len(embeddings) - 1):
+        sim = cosine_similarity(
+            embeddings[i].reshape(1, -1),
+            embeddings[i+1].reshape(1, -1)
+        )[0][0]
+        sim_scores.append(sim)
+    
+    # Average similarity as coherence score
+    coherence = np.mean(sim_scores)
+    return coherence
+
+if __name__ == "__main__":
+    text1 = ("The cat sat on the mat. It was very comfortable. "
+             "Later, it chased a mouse. The mouse escaped quickly.")
+    
+    text2 = ("The cat sat on the mat. Quantum physics is complicated. "
+             "I enjoy reading books about ancient history.")
+    
+    print(f"Coherence score for text1: {sentence_coherence_score(text1):.4f}")
+    print(f"Coherence score for text2: {sentence_coherence_score(text2):.4f}")
