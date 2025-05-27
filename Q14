@@ -1,0 +1,35 @@
+import nltk
+from nltk import CFG
+from nltk.parse import RecursiveDescentParser
+
+# Define a simple context-free grammar
+grammar = CFG.fromstring("""
+S -> NP VP
+NP -> Det N | Det N PP | 'I'
+VP -> V NP | VP PP
+PP -> P NP
+Det -> 'a' | 'the'
+N -> 'man' | 'park' | 'telescope' | 'dog'
+V -> 'saw' | 'walked'
+P -> 'in' | 'with'
+""")
+
+# Create a parser
+parser = RecursiveDescentParser(grammar)
+
+def check_sentence(sentence):
+    tokens = sentence.lower().split()
+    parses = list(parser.parse(tokens))
+    if parses:
+        print(f"Sentence '{sentence}' agrees with the CFG.")
+        # Optionally print parse trees
+        for tree in parses:
+            print(tree)
+    else:
+        print(f"Sentence '{sentence}' does NOT agree with the CFG.")
+
+# Test sentences
+check_sentence("I saw a man")
+check_sentence("The dog walked in the park")
+check_sentence("I saw the man with a telescope")
+check_sentence("The telescope walked the dog")  # This should fail
