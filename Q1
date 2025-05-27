@@ -1,0 +1,19 @@
+import re
+
+def regex_demo():
+    text = "The quick brown fox jumps over the lazy dog. ab is at the end."
+    
+    # Pattern to find words that start with 'b' and end with 'n' (like 'brown')
+    pattern = r'\bb\w+n\b'
+    
+    # Find all matches
+    matches = re.findall(pattern, text)
+    print("Words starting with 'b' and ending with 'n':", matches)
+    
+    # Check if string ends with 'ab'
+    if re.search(r'ab$', text):
+        print("The string ends with 'ab'.")
+    else:
+        print("The string does not end with 'ab'.")
+
+regex_demo()
