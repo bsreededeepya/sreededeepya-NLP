@@ -1,0 +1,40 @@
+import nltk
+from collections import defaultdict, Counter
+
+# Download necessary NLTK data (only once)
+nltk.download('punkt')
+nltk.download('treebank')
+
+# Load tagged sentences from the Penn Treebank corpus
+tagged_sentences = nltk.corpus.treebank.tagged_sents()
+
+# Step 1: Build a frequency-based unigram tagger (most frequent tag for each word)
+word_tag_freq = defaultdict(Counter)
+
+for sent in tagged_sentences:
+    for word, tag in sent:
+        word_tag_freq[word.lower()][tag] += 1
+
+# Create a simple model that maps word -> most frequent tag
+unigram_model = {word: tags.most_common(1)[0][0] for word, tags in word_tag_freq.items()}
+
+# Step 2: POS tagging using the model
+def simple_stochastic_pos_tagger(sentence):
+    tokens = nltk.word_tokenize(sentence)
+    tagged = []
+
+    for word in tokens:
+        lower_word = word.lower()
+        tag = unigram_model.get(lower_word, 'NN')  # default to 'NN' (noun) if unknown
+        tagged.append((word, tag))
+
+    return tagged
+
+# Example sentence to tag
+text = "The quick brown fox jumps over the lazy dog"
+tagged_result = simple_stochastic_pos_tagger(text)
+
+# Display result
+print("Stochastic POS Tagging:")
+for word, tag in tagged_result:
+    print(f"{word} -> {tag}")
