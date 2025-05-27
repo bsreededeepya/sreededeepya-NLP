@@ -1,0 +1,218 @@
+import re
+
+# Token types
+TOKEN_VAR = 'VAR'          # Variables: x, y, z
+TOKEN_CONST = 'CONST'      # Constants: a, b, c
+TOKEN_PRED = 'PRED'        # Predicate names: P, Q, R
+TOKEN_FORALL = 'FORALL'    # ∀
+TOKEN_EXISTS = 'EXISTS'    # ∃
+TOKEN_NOT = 'NOT'          # ¬
+TOKEN_AND = 'AND'          # ∧
+TOKEN_OR = 'OR'            # ∨
+TOKEN_IMPLIES = 'IMPLIES'  # →
+TOKEN_IFF = 'IFF'          # ↔
+TOKEN_LPAREN = 'LPAREN'    # (
+TOKEN_RPAREN = 'RPAREN'    # )
+TOKEN_COMMA = 'COMMA'      # ,
+
+# Tokenizer using regex
+token_specification = [
+    (TOKEN_FORALL,   r'∀'),
+    (TOKEN_EXISTS,   r'∃'),
+    (TOKEN_NOT,      r'¬'),
+    (TOKEN_AND,      r'∧'),
+    (TOKEN_OR,       r'∨'),
+    (TOKEN_IMPLIES,  r'→'),
+    (TOKEN_IFF,      r'↔'),
+    (TOKEN_LPAREN,   r'\('),
+    (TOKEN_RPAREN,   r'\)'),
+    (TOKEN_COMMA,    r','),
+    (TOKEN_PRED,     r'[A-Z]'),          # single uppercase letter
+    (TOKEN_VAR,      r'[xyz]'),          # variables are x, y, z
+    (TOKEN_CONST,    r'[abc]'),          # constants are a, b, c
+    ('SKIP',        r'[ \t]+'),          # Skip spaces and tabs
+]
+
+tok_regex = '|'.join(f'(?P<{pair[0]}>{pair[1]})' for pair in token_specification)
+get_token = re.compile(tok_regex).match
+
+class Token:
+    def __init__(self, type_, value):
+        self.type = type_
+        self.value = value
+    def __repr__(self):
+        return f"Token({self.type}, '{self.value}')"
+
+def tokenize(text):
+    pos = 0
+    tokens = []
+    mo = get_token(text, pos)
+    while mo:
+        typ = mo.lastgroup
+        if typ != 'SKIP':
+            val = mo.group(typ)
+            tokens.append(Token(typ, val))
+        pos = mo.end()
+        mo = get_token(text, pos)
+    if pos != len(text):
+        raise SyntaxError(f'Unexpected character {text[pos]} at position {pos}')
+    return tokens
+
+# Parser Implementation
+
+class Parser:
+    def __init__(self, tokens):
+        self.tokens = tokens
+        self.pos = 0
+
+    def peek(self):
+        if self.pos < len(self.tokens):
+            return self.tokens[self.pos]
+        return None
+
+    def advance(self):
+        self.pos += 1
+
+    def consume(self, *token_types):
+        token = self.peek()
+        if token and token.type in token_types:
+            self.advance()
+            return token
+        expected = ' or '.join(token_types)
+        actual = token.type if token else 'EOF'
+        raise SyntaxError(f'Expected {expected} but got {actual}')
+
+    # Grammar parsing functions:
+
+    def parse(self):
+        result = self.expr()
+        if self.peek() is not None:
+            raise SyntaxError('Unexpected token at the end')
+        return result
+
+    def expr(self):
+        # Expr := Quantifier Expr | impl_expr
+        token = self.peek()
+        if token and token.type in (TOKEN_FORALL, TOKEN_EXISTS):
+            return self.quantifier_expr()
+        else:
+            return self.impl_expr()
+
+    def quantifier_expr(self):
+        # Quantifier Expr
+        token = self.consume(TOKEN_FORALL, TOKEN_EXISTS)
+        var = self.consume(TOKEN_VAR)
+        body = self.expr()
+        return ('Quantifier', token.type, var.value, body)
+
+    def impl_expr(self):
+        # impl_expr := or_expr ( (→ | ↔) impl_expr )?
+        left = self.or_expr()
+        token = self.peek()
+        if token and token.type in (TOKEN_IMPLIES, TOKEN_IFF):
+            op = token.type
+            self.advance()
+            right = self.impl_expr()
+            return ('BinaryOp', op, left, right)
+        return left
+
+    def or_expr(self):
+        # or_expr := and_expr (∨ and_expr)*
+        left = self.and_expr()
+        while True:
+            token = self.peek()
+            if token and token.type == TOKEN_OR:
+                self.advance()
+                right = self.and_expr()
+                left = ('BinaryOp', 'OR', left, right)
+            else:
+                break
+        return left
+
+    def and_expr(self):
+        # and_expr := unary_expr (∧ unary_expr)*
+        left = self.unary_expr()
+        while True:
+            token = self.peek()
+            if token and token.type == TOKEN_AND:
+                self.advance()
+                right = self.unary_expr()
+                left = ('BinaryOp', 'AND', left, right)
+            else:
+                break
+        return left
+
+    def unary_expr(self):
+        # unary_expr := ¬ unary_expr | atom
+        token = self.peek()
+        if token and token.type == TOKEN_NOT:
+            self.advance()
+            expr = self.unary_expr()
+            return ('NOT', expr)
+        else:
+            return self.atom()
+
+    def atom(self):
+        token = self.peek()
+        if token is None:
+            raise SyntaxError('Unexpected EOF')
+
+        if token.type == TOKEN_LPAREN:
+            self.advance()
+            expr = self.expr()
+            self.consume(TOKEN_RPAREN)
+            return expr
+
+        elif token.type == TOKEN_PRED:
+            return self.predicate()
+
+        else:
+            raise SyntaxError(f'Unexpected token {token.type} in atom')
+
+    def predicate(self):
+        # PredicateName '(' Terms ')'
+        pred = self.consume(TOKEN_PRED)
+        self.consume(TOKEN_LPAREN)
+        terms = self.terms()
+        self.consume(TOKEN_RPAREN)
+        return ('Predicate', pred.value, terms)
+
+    def terms(self):
+        # Term (',' Term)*
+        term_list = [self.term()]
+        while True:
+            token = self.peek()
+            if token and token.type == TOKEN_COMMA:
+                self.advance()
+                term_list.append(self.term())
+            else:
+                break
+        return term_list
+
+    def term(self):
+        token = self.peek()
+        if token.type == TOKEN_VAR:
+            self.advance()
+            return ('Variable', token.value)
+        elif token.type == TOKEN_CONST:
+            self.advance()
+            return ('Constant', token.value)
+        else:
+            raise SyntaxError(f'Expected variable or constant but got {token.type}')
+
+# Example usage:
+
+def parse_fop_logic(expression):
+    try:
+        tokens = tokenize(expression)
+        parser = Parser(tokens)
+        ast = parser.parse()
+        return ast
+    except SyntaxError as e:
+        return f"Syntax Error: {e}"
+
+if __name__ == "__main__":
+    test_expr = "∀x (P(x) → ∃y Q(y, x))"
+    ast = parse_fop_logic(test_expr)
+    print("Parsed AST:")
+    print(ast)
