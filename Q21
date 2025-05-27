@@ -1,0 +1,52 @@
+import nltk
+from nltk.corpus import wordnet as wn
+
+def extract_noun_phrases(sentence):
+    """
+    Extract noun phrases from a sentence using POS tagging and chunking.
+    """
+    # Tokenize sentence
+    words = nltk.word_tokenize(sentence)
+    # POS tagging
+    pos_tags = nltk.pos_tag(words)
+    
+    # Define a simple NP chunk grammar
+    grammar = "NP: {<DT>?<JJ>*<NN.*>+}"
+    cp = nltk.RegexpParser(grammar)
+    tree = cp.parse(pos_tags)
+    
+    noun_phrases = []
+    
+    # Extract noun phrases
+    for subtree in tree.subtrees():
+        if subtree.label() == 'NP':
+            np_words = [word for word, tag in subtree.leaves()]
+            noun_phrases.append(' '.join(np_words))
+    
+    return noun_phrases
+
+def get_meanings(noun_phrase):
+    """
+    Get meanings (definitions) of the head noun in the noun phrase from WordNet.
+    """
+    # Use last word as head noun (simplified heuristic)
+    head_noun = noun_phrase.split()[-1]
+    synsets = wn.synsets(head_noun, pos=wn.NOUN)
+    
+    if not synsets:
+        return ["No meaning found."]
+    
+    # Return definitions of the first few synsets
+    return [syn.definition() for syn in synsets[:3]]
+
+if __name__ == "__main__":
+    sentence = "The quick brown fox jumps over the lazy dog near the river bank."
+    noun_phrases = extract_noun_phrases(sentence)
+    
+    print("Extracted Noun Phrases and their meanings:\n")
+    for np in noun_phrases:
+        meanings = get_meanings(np)
+        print(f"Noun Phrase: {np}")
+        for i, meaning in enumerate(meanings, 1):
+            print(f"  Meaning {i}: {meaning}")
+        print()
