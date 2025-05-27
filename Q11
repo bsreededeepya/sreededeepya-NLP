@@ -1,0 +1,26 @@
+import nltk
+from nltk import CFG
+from nltk.parse import RecursiveDescentParser
+
+# Step 1: Define a simple context-free grammar (CFG)
+grammar = CFG.fromstring("""
+    S -> NP VP
+    NP -> Det N | Det N PP
+    VP -> V NP | VP PP
+    PP -> P NP
+    Det -> 'the' | 'a'
+    N -> 'cat' | 'dog' | 'telescope' | 'mat'
+    V -> 'saw' | 'sat'
+    P -> 'on' | 'with'
+""")
+
+# Step 2: Create a top-down parser (recursive descent parser)
+parser = RecursiveDescentParser(grammar)
+
+# Step 3: Tokenize and parse a sentence
+sentence = "the dog saw a cat with the telescope".split()
+
+print("Parse Trees:")
+for tree in parser.parse(sentence):
+    print(tree)
+    tree.pretty_print()
