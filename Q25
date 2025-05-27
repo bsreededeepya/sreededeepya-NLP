@@ -1,0 +1,22 @@
+import openai
+
+# Replace 'your-api-key' with your actual OpenAI API key
+openai.api_key = 'your-api-key'
+
+def generate_text(prompt, model="text-davinci-003", max_tokens=100, temperature=0.7):
+    response = openai.Completion.create(
+        engine=model,
+        prompt=prompt,
+        max_tokens=max_tokens,
+        temperature=temperature,
+        n=1,
+        stop=None
+    )
+    generated_text = response.choices[0].text.strip()
+    return generated_text
+
+if __name__ == "__main__":
+    prompt = "Write a short poem about the sea and stars."
+    output = generate_text(prompt)
+    print("Generated Text:")
+    print(output)
