@@ -1,0 +1,70 @@
+import math
+from collections import Counter
+
+def compute_tf(doc):
+    tf = Counter(doc)
+    doc_len = len(doc)
+    return {term: freq / doc_len for term, freq in tf.items()}
+
+def compute_idf(docs):
+    idf = {}
+    N = len(docs)
+    all_terms = set(term for doc in docs for term in doc)
+    
+    for term in all_terms:
+        containing_docs = sum(1 for doc in docs if term in doc)
+        idf[term] = math.log((N + 1) / (containing_docs + 1)) + 1  # Smoothed IDF
+    
+    return idf
+
+def compute_tfidf(doc, idf):
+    tf = compute_tf(doc)
+    tfidf = {term: tf.get(term, 0) * idf.get(term, 0) for term in idf.keys()}
+    return tfidf
+
+def cosine_similarity(vec1, vec2):
+    dot_product = sum(vec1.get(k,0)*vec2.get(k,0) for k in vec1)
+    norm1 = math.sqrt(sum(v**2 for v in vec1.values()))
+    norm2 = math.sqrt(sum(v**2 for v in vec2.values()))
+    if norm1 == 0 or norm2 == 0:
+        return 0.0
+    return dot_product / (norm1 * norm2)
+
+def preprocess(text):
+    # simple preprocessing: lowercase and split by whitespace
+    return text.lower().split()
+
+def rank_documents(docs, query):
+    preprocessed_docs = [preprocess(doc) for doc in docs]
+    preprocessed_query = preprocess(query)
+    
+    idf = compute_idf(preprocessed_docs + [preprocessed_query])  # include query for consistent idf
+    
+    doc_tfidfs = [compute_tfidf(doc, idf) for doc in preprocessed_docs]
+    query_tfidf = compute_tfidf(preprocessed_query, idf)
+    
+    scores = []
+    for idx, doc_vec in enumerate(doc_tfidfs):
+        score = cosine_similarity(doc_vec, query_tfidf)
+        scores.append((idx, score))
+    
+    # Sort by score descending
+    ranked_docs = sorted(scores, key=lambda x: x[1], reverse=True)
+    return ranked_docs
+
+if __name__ == "__main__":
+    documents = [
+        "The quick brown fox jumps over the lazy dog",
+        "Never jump over the lazy dog quickly",
+        "A fast brown fox leaps over sleeping dogs",
+        "Python is a programming language",
+        "I love coding in Python"
+    ]
+    
+    query = "quick brown fox"
+    
+    ranked = rank_documents(documents, query)
+    
+    print("Ranking of documents for query:", query)
+    for idx, score in ranked:
+        print(f"Doc {idx} (score: {score:.4f}): {documents[idx]}")
