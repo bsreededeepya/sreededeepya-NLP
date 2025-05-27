@@ -1,0 +1,36 @@
+import nltk
+from nltk.tag import RegexpTagger
+from nltk.tokenize import word_tokenize
+
+# Download required NLTK data
+nltk.download('punkt')
+
+# Define regular expression patterns for tagging
+patterns = [
+    (r'.*ing$', 'VBG'),      # gerunds: swimming, running
+    (r'.*ed$', 'VBD'),       # past tense verbs: walked, jumped
+    (r'.*es$', 'VBZ'),       # third person singular verbs: runs, jumps
+    (r'.*ould$', 'MD'),      # modals: could, would
+    (r'.*\'s$', 'POS'),      # possessive endings: John's
+    (r'.*s$', 'NNS'),        # plural nouns: cats, dogs
+    (r'^-?[0-9]+(.[0-9]+)?$', 'CD'),  # cardinal numbers
+    (r'the|a|an$', 'DT'),    # determiners
+    (r'.*', 'NN')            # default: noun
+]
+
+# Create the RegexpTagger
+regexp_tagger = RegexpTagger(patterns)
+
+# Example sentence
+sentence = "The dogs are playing in the garden while the child watches."
+
+# Tokenize the sentence
+tokens = word_tokenize(sentence.lower())
+
+# Apply the tagger
+tagged = regexp_tagger.tag(tokens)
+
+# Print the results
+print("Rule-Based POS Tagging:")
+for word, tag in tagged:
+    print(f"{word} -> {tag}")
