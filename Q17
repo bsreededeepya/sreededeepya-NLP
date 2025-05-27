@@ -1,0 +1,20 @@
+from nltk.corpus import wordnet as wn
+
+def explore_wordnet(word):
+    synsets = wn.synsets(word)
+    if not synsets:
+        print(f"No synsets found for the word '{word}'.")
+        return
+    
+    print(f"Synsets and meanings for the word '{word}':\n")
+    
+    for i, syn in enumerate(synsets, start=1):
+        print(f"{i}. Synset: {syn.name()}")
+        print(f"   Definition: {syn.definition()}")
+        print(f"   Examples: {syn.examples()}")
+        lemmas = [lemma.name() for lemma in syn.lemmas()]
+        print(f"   Lemmas: {lemmas}\n")
+
+if __name__ == "__main__":
+    word_to_explore = "bank"
+    explore_wordnet(word_to_explore)
